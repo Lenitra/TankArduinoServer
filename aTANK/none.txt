@@ -1,0 +1,2 @@
+In this folder : 
+Arduino code for the hardware
