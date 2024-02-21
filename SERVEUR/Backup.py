@@ -1,63 +1,24 @@
-from flask import Flask, request, render_template
-from flask_socketio import SocketIO, emit
-import json
-import random
-import datetime
+import requests
 
-app = Flask(__name__)
-app.config["SECRET_KEY"] = "secret!"
-socketio = SocketIO(app)
+# Adresse IP ou nom d'hôte du dispositif distant
+remote_host = "192.168.1.100"  # Remplacez par l'adresse IP correcte
 
+# Port utilisé par le serveur web sur le dispositif distant
+port = 55055
 
-@app.route("/ctrl")
-def index():
-    return render_template("controles.html")
+# Fonction pour envoyer une commande au dispositif distant
+def send_command(command):
+    url = f"http://{remote_host}:{port}/"
+    try:
+        response = requests.post(url, data=command)
+        if response.status_code == 200:
+            print("Commande envoyée avec succès au dispositif distant.")
+        else:
+            print("Échec de l'envoi de la commande au dispositif distant.")
+    except Exception as e:
+        print(f"Erreur lors de l'envoi de la commande : {e}")
 
-
-@app.route("/")
-def test():
-    return "Le serveur fonctionne correctement"
-
-
-# on connect
-@socketio.on("connect")
-def test_connect():
-    print("-------------------")
-    print("Client connecté : ")
-    # print les informations du client connecté
-    print(request.sid)
-    print(request.remote_addr)
-    print(request.headers)
-    print("-------------------")
-
-
-# endpoint flask
-@app.route("/endpoint", methods=["POST", "GET"])
-def endpoint():
-    # envoie un message à tout les clients connectés
-    socketio.emit("message", "data from server")
-    return "Okayyyyyy !"
-
-
-# on disconnect
-@socketio.on("disconnect")
-def test_disconnect():
-    print("Client déconnecté")
-
-
-@socketio.on("message")
-def handle_message(message):
-    print("Received message: " + message)
-    # Ici, vous pouvez ajouter la logique pour traiter le message reçu
-    # Par exemple, vous pourriez vérifier si le message est "avancer" et effectuer une action en conséquence
-    if message == "avancer":
-        # Envoie un message 'avancer' vers tout les clients connectés
-        socketio.emit("avancer", "avancer")
-
-
-if __name__ == "__main__":
-
-    ip = "217.160.99.153"
-    port = 55055
-
-    socketio.run(app, debug=True, host=ip, port=port)
+# Exemples de commandes à envoyer
+# Vous pouvez remplacer ces exemples par vos propres commandes
+send_command("stepmotor 1 100")  # Commande pour déplacer le moteur pas à pas 1 de 100 pas
+send_command("dcmotor 50 75")     # Commande pour contrôler un moteur DC avec les paramètres x=50 et y=75

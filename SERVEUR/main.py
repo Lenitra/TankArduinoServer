@@ -72,7 +72,7 @@ async def server(websocket, path):
 
 
 # Lancer le serveur WebSocket
-start_server = websockets.serve(server, "217.160.99.153", 55055)
+start_server = websockets.serve(server, "217.160.99.153", 44045)
 print("Serveur WebSocket lancé")
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
