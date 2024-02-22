@@ -1,24 +1,78 @@
-import requests
+import asyncio
+import websockets
+import time
 
-# Adresse IP ou nom d'hôte du dispositif distant
-remote_host = "192.168.1.100"  # Remplacez par l'adresse IP correcte
+# Stocker toutes les connexions clientes
+clients = set()
+tanks = set()
 
-# Port utilisé par le serveur web sur le dispositif distant
-port = 55055
-
-# Fonction pour envoyer une commande au dispositif distant
-def send_command(command):
-    url = f"http://{remote_host}:{port}/"
+async def server(websocket, path):
+    # Ajouter le client à la liste des clients connectés
+    clients.add(websocket)
+    print(f"-- Nouvelle connexion : {websocket.remote_address}")
     try:
-        response = requests.post(url, data=command)
-        if response.status_code == 200:
-            print("Commande envoyée avec succès au dispositif distant.")
-        else:
-            print("Échec de l'envoi de la commande au dispositif distant.")
-    except Exception as e:
-        print(f"Erreur lors de l'envoi de la commande : {e}")
+        async for message in websocket:
+            
+            print(f"<< {websocket.remote_address}: {message}")
+            
+            if message == "Bonjour du ESP32!":
+                tanks.add(websocket)
+                print(f"-- Nouveau tank : {websocket.remote_address}")
+            
+            # Envoie un message à tout les tanks connectés
+            # cmd : tanks <str:cmd>
+            elif message.startswith("tanks"):
+                message = message[6:]
+                for tank in tanks:
+                    await tank.send(message)
+                    print(f">> {tank.remote_address}: {message}")
 
-# Exemples de commandes à envoyer
-# Vous pouvez remplacer ces exemples par vos propres commandes
-send_command("stepmotor 1 100")  # Commande pour déplacer le moteur pas à pas 1 de 100 pas
-send_command("dcmotor 50 75")     # Commande pour contrôler un moteur DC avec les paramètres x=50 et y=75
+            # Envoie un message à un tank spécifique
+            # cmd : tank<int:id> <str:cmd>
+            elif message.startswith("tank"):
+                message = message[5:] 
+                id = int(message.split(" ")[0])
+                await tanks.send(message)
+                print(f">> {tanks[id].remote_address}: {message}")
+
+            # Envoie un message à tout les clients connectés
+            # cmd : all <str:cmd>
+            elif message.startswith("all"):
+                message = message[4:]
+                for client in clients:
+                    await client.send(message)
+                    print(f">> {client.remote_address}: {message}")
+
+            # Afficher les infos du réseau et les renvoie au client
+            # cmd : infos
+            elif message == "infos":
+                msg = f"-- clients: {len(clients)}\n-- tanks: {len(tanks)}"
+                print(msg)
+                msg.replace("\n", ", ")
+                msg.replace("-- ", "")
+                await websocket.send(msg)
+
+            # Effacer la console
+            # cmd : clear
+            elif message == "clear":
+                for _ in range(1000):
+                    print()
+                
+
+    except websockets.exceptions.ConnectionClosedError:
+        pass
+    finally:
+        # Supprimer le client de la liste des clients connectés
+        clients.remove(websocket)
+        try:                    
+            tanks.remove(websocket)
+        except:
+            pass
+        print(f"-- Déconnexion : {websocket.remote_address}")
+
+
+# Lancer le serveur WebSocket
+start_server = websockets.serve(server, "217.160.99.153", 44045)
+print("Serveur WebSocket lancé")
+asyncio.get_event_loop().run_until_complete(start_server)
+asyncio.get_event_loop().run_forever()
