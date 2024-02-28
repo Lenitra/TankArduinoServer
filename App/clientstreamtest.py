@@ -16,7 +16,7 @@ async def receive_video():
                 img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
                 # Afficher l'image
                 cv2.imshow("Image reçue", img)
-                cv2.waitKey(1)  # Attendre un peu pour la mise à jour de l'affichage
+                cv2.waitKey(33)  # Définir la pause pour obtenir environ 30 FPS
             except websockets.ConnectionClosedError:
                 print("Déconnecté du serveur WebSocket")
                 break
