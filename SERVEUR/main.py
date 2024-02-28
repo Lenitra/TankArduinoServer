@@ -21,7 +21,7 @@ async def video_stream(websocket, path):
                     await ws.send(data)
                     print(f"Réacheminement des données à {connected_websockets.index(ws)} clients")
     except websockets.ConnectionClosedError:
-        print("Client déconnecté")
+        print(f"Client déconnecté, nombre de clients connectés: {len(connected_websockets)}")
         connected_websockets.remove(websocket)  # Retirer la websocket de la liste si elle se déconnecte
 
 async def server():
