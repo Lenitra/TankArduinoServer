@@ -9,7 +9,7 @@ server_port = 55055
 connected_websockets = []
 
 async def video_stream(websocket, path):
-    print(f"Client connecté, nombre de clients connectés: {len(connected_websockets)+1}")
+    print(f"Client connecté, nombre de clients connectés: {len(connected_websockets)}")
     connected_websockets.append(websocket)  # Ajouter la nouvelle websocket à la liste
     try:
         while True:
@@ -19,6 +19,7 @@ async def video_stream(websocket, path):
             for ws in connected_websockets:
                 if ws != websocket and ws.open:
                     await ws.send(data)
+                    print(f"Réacheminement des données à {connected_websockets.index(ws)} clients")
     except websockets.ConnectionClosedError:
         print("Client déconnecté")
         connected_websockets.remove(websocket)  # Retirer la websocket de la liste si elle se déconnecte
