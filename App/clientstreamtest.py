@@ -14,9 +14,13 @@ async def receive_video():
                 # Décoder l'image
                 nparr = np.frombuffer(data, np.uint8)
                 img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                # print la taille de l'image en x et y
+                print(f"Taille de l'image: {img.shape[1]} x {img.shape[0]}")
+                print(f"Nombre de canaux: {img.shape[2]}")
+                print(f"Type de l'image: {img.dtype}")
                 # Afficher l'image
-                cv2.imshow("Image reçue", img)
-                cv2.waitKey(33)  # Définir la pause pour obtenir environ 30 FPS
+                cv2.imshow("Image", img)
+                cv2.waitKey(1)  # Définir la pause pour obtenir environ 30 FPS
             except websockets.ConnectionClosedError:
                 print("Déconnecté du serveur WebSocket")
                 break

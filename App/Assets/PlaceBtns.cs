@@ -26,7 +26,7 @@ public class PlaceBtns : MonoBehaviour
         {
             count++;
             // set the size of the child to 1/5 of the canvas in x and 1/2 of the canvas in y
-            child.GetComponent<RectTransform>().sizeDelta = new Vector2(x / 5, y / 2.1f);
+            // child.GetComponent<RectTransform>().sizeDelta = new Vector2(x / 5, y / 2.1f);
             // set the position of the first child to be -2x
             // set the position of the second child to be -x
             // set the position of the third child to be 0
