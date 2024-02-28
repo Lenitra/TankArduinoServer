@@ -21,4 +21,4 @@ async def receive_video():
                 print("Déconnecté du serveur WebSocket")
                 break
 
-asyncio.get_event_loop().run_until_complete(receive_video())
+asyncio.run(receive_video())
