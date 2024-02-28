@@ -9,8 +9,8 @@ server_port = 55055
 connected_websockets = []
 
 async def video_stream(websocket, path):
-    print(f"Client connecté, nombre de clients connectés: {len(connected_websockets)}")
     connected_websockets.append(websocket)  # Ajouter la nouvelle websocket à la liste
+    print(f"Client connecté, nombre de clients connectés: {len(connected_websockets)}")
     try:
         while True:
             # Recevoir les données binaires de l'image depuis le websocket client
