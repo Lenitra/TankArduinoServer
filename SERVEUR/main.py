@@ -1,78 +1,34 @@
 import asyncio
 import websockets
-import time
+import cv2
+import numpy as np
 
-# Stocker toutes les connexions clientes
-clients = set()
-tanks = set()
+# Fonction pour décoder les images JPEG binaires
+def decode_image(data):
+    nparr = np.frombuffer(data, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    return img
 
-async def server(websocket, path):
-    # Ajouter le client à la liste des clients connectés
-    clients.add(websocket)
-    print(f"-- Nouvelle connexion : {websocket.remote_address}")
-    try:
-        async for message in websocket:
-            
-            print(f"<< {websocket.remote_address}: {message}")
-            
-            if message == "Bonjour du ESP32!":
-                tanks.add(websocket)
-                print(f"-- Nouveau tank : {websocket.remote_address}")
-            
-            # Envoie un message à tout les tanks connectés
-            # cmd : tanks <str:cmd>
-            elif message.startswith("tanks"):
-                message = message[6:]
-                for tank in tanks:
-                    await tank.send(message)
-                    print(f">> {tank.remote_address}: {message}")
+async def video_stream(websocket, path):
+    print("Client connecté")
+    while True:
+        try:
+            # Recevoir les données binaires de l'image depuis le websocket
+            data = await websocket.recv()
+            # Décoder l'image
+            image = decode_image(data)
+            # Afficher l'image (vous pouvez choisir de la sauvegarder ou la traiter autrement)
+            cv2.imshow("ESP32 Video Stream", image)
+            cv2.waitKey(1)  # Attendre un peu pour la mise à jour de l'affichage
+        except websockets.ConnectionClosedError:
+            print("Client déconnecté")
+            break
 
-            # Envoie un message à un tank spécifique
-            # cmd : tank<int:id> <str:cmd>
-            elif message.startswith("tank"):
-                message = message[5:] 
-                id = int(message.split(" ")[0])
-                await tanks.send(message)
-                print(f">> {tanks[id].remote_address}: {message}")
+# Spécifiez l'adresse IP publique de votre serveur et le port sur lequel le serveur WebSocket écoute
+server_ip = "217.160.99.153"
+server_port = 55055
 
-            # Envoie un message à tout les clients connectés
-            # cmd : all <str:cmd>
-            elif message.startswith("all"):
-                message = message[4:]
-                for client in clients:
-                    await client.send(message)
-                    print(f">> {client.remote_address}: {message}")
+start_server = websockets.serve(video_stream, server_ip, server_port)
 
-            # Afficher les infos du réseau et les renvoie au client
-            # cmd : infos
-            elif message == "infos":
-                msg = f"-- clients: {len(clients)}\n-- tanks: {len(tanks)}"
-                print(msg)
-                msg.replace("\n", ", ")
-                msg.replace("-- ", "")
-                await websocket.send(msg)
-
-            # Effacer la console
-            # cmd : clear
-            elif message == "clear":
-                for _ in range(1000):
-                    print()
-                
-
-    except websockets.exceptions.ConnectionClosedError:
-        pass
-    finally:
-        # Supprimer le client de la liste des clients connectés
-        clients.remove(websocket)
-        try:                    
-            tanks.remove(websocket)
-        except:
-            pass
-        print(f"-- Déconnexion : {websocket.remote_address}")
-
-
-# Lancer le serveur WebSocket
-start_server = websockets.serve(server, "217.160.99.153", 55055)
-print("Serveur WebSocket lancé")
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
