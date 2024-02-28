@@ -9,7 +9,7 @@ server_port = 55055
 connected_websockets = []
 
 async def video_stream(websocket, path):
-    print(f"Client connecté, nombre de clients connectés: {len(connected_websockets)}")
+    print(f"Client connecté, nombre de clients connectés: {len(connected_websockets)+1}")
     connected_websockets.append(websocket)  # Ajouter la nouvelle websocket à la liste
     try:
         while True:
